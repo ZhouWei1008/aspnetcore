@@ -4,6 +4,7 @@
 #nullable disable warnings
 
 using System;
+using System.Runtime.ExceptionServices;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -68,12 +69,6 @@ namespace Microsoft.AspNetCore.Components.Routing
         /// Get or sets the content to display when asynchronous navigation is in progress.
         /// </summary>
         [Parameter] public RenderFragment Navigating { get; set; }
-
-        /// <summary>
-        /// Gets or sets the content to display with an asynchronous navigation task
-        /// throws an unhandled exception.
-        /// </summary>
-        [Parameter] public RenderFragment<Exception> OnNavigateError { get; set; }
 
         /// <summary>
         /// Gets or sets a handler that should be called before navigating to a new page.
@@ -207,14 +202,14 @@ namespace Microsoft.AspNetCore.Components.Routing
                 return true;
             }
 
-            // If we've already invoked a task and stored its CTS, then
-            // cancel that existing CTS.
+            // Cancel the CTS instead of disposing it, since disposing does not
+            // actually cancel and can cause unintended Object Disposed Exceptions.
+            // This effectivelly cancels the previously running task and completes it.
             _onNavigateCts?.Cancel();
             // Then make sure that the task has been completed cancelled or
             // completed before continuing with the execution of this current task.
             await previousOnNavigate;
 
-            // Create a new cancellation token source for this instance
             _onNavigateCts = new CancellationTokenSource();
             var navigateContext = new NavigationContext(path, _onNavigateCts.Token);
 
@@ -234,13 +229,23 @@ namespace Microsoft.AspNetCore.Components.Routing
 
             var completedTask = await Task.WhenAny(task, cancellationTcs.Task);
 
-            if (OnNavigateError != null && completedTask.IsFaulted)
+            if (completedTask.IsFaulted)
             {
-                _renderHandle.Render(OnNavigateError(completedTask.Exception.InnerException));
+                ThrowExceptionInRenderer(completedTask);
                 return false;
             }
 
-            return task == completedTask;
+            return task == completedTask && !(completedTask.IsCanceled || _onNavigateCts.Token.IsCancellationRequested);
+        }
+
+        internal virtual void ThrowExceptionInRenderer(Task task)
+        {
+            var exception = task.Exception.Flatten().InnerException;
+            while (exception is AggregateException e)
+            {
+                exception = e.InnerException;
+            }
+            _renderHandle.Render(builder => ExceptionDispatchInfo.Capture(exception).Throw());
         }
 
         internal async Task RunOnNavigateWithRefreshAsync(string path, bool isNavigationIntercepted)

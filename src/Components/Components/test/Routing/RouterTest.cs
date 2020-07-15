@@ -39,6 +39,26 @@ namespace Microsoft.AspNetCore.Components.Test.Routing
         }
 
         [Fact]
+        public async Task CanHandleSingleFailedOnNavigateAsync()
+        {
+            // Arrange
+            var router = CreateMockRouter();
+            async Task OnNavigateAsync(NavigationContext args)
+            {
+                await Task.Delay(2000);
+                throw new Exception("This is an uncaught exception.");
+            }
+            router.Object.OnNavigateAsync = new EventCallbackFactory().Create<NavigationContext>(router, OnNavigateAsync);
+
+            // Act
+            await router.Object.RunOnNavigateWithRefreshAsync("http://example.com/jan", false);
+
+            // Assert
+            router.Verify(x => x.Refresh(false), Times.Never());
+            router.Verify(x => x.ThrowExceptionInRenderer(It.IsAny<Task>()), Times.Once());
+        }
+
+        [Fact]
         public async Task CanCancelPreviousOnNavigateAsync()
         {
             // Arrange
@@ -57,7 +77,7 @@ namespace Microsoft.AspNetCore.Components.Test.Routing
 
             // Assert
             var expected = "jan";
-            Assert.Equal(cancelled, expected);
+            Assert.Equal(expected, cancelled);
         }
 
         [Fact]
@@ -92,13 +112,8 @@ namespace Microsoft.AspNetCore.Components.Test.Routing
         {
             var router = new Mock<Router>() { CallBase = true };
             router.Setup(x => x.Refresh(It.IsAny<bool>())).Verifiable();
+            router.Setup(x => x.ThrowExceptionInRenderer(It.IsAny<Task>())).Verifiable();
             return router;
         }
-
-        [Route("jan")]
-        private class JanComponent : ComponentBase { }
-
-        [Route("feb")]
-        private class FebComponent : ComponentBase { }
     }
 }
