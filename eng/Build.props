@@ -47,7 +47,7 @@
         <!-- Include RTMVersions.csproj unless this invocation is building RepoTasks.csproj or won't compile C#. -->
         <ProjectToBuild Include="$(RepoRoot)eng\RTMVersions\RTMVersions.csproj"
             Exclude="@(ProjectToExclude)"
-            Condition=" $(ProjectToBuild.EndsWith('.csproj') AND !$(ProjectToBuild.EndsWith('RepoTasks.csproj') " />
+            Condition=" $(ProjectToBuild.EndsWith('.csproj') AND !$(ProjectToBuild.EndsWith('RepoTasks.csproj')) " />
         <ProjectToBuild Include="$(ProjectToBuild)" Exclude="@(ProjectToExclude);$(RepoRoot)**\bin\**\*;$(RepoRoot)**\obj\**\*">
           <RestoreInParallel Condition="'%(Extension)' == '.npmproj'">false</RestoreInParallel>
         </ProjectToBuild>

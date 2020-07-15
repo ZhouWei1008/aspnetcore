@@ -7,7 +7,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <IsPackable>false</IsPackable>
 
-    <!-- Don't bother building anything here. We only only to ensure the RTM packages are on disk. -->
+    <!-- Don't bother building anything here. We only need to ensure the RTM packages are on disk. -->
     <DebugType>none</DebugType>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <CopyBuildOutputToPublishDirectory>false</CopyBuildOutputToPublishDirectory>
