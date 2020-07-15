@@ -222,15 +222,16 @@
         LeftKey="Filename"
         ItemSpecToUse="Left"
         LeftMetadata="*"
-        RightMetadata="RTMVersion">
+        RightMetadata="RTMVersion;Version">
       <Output TaskParameter="JoinResult" ItemName="_ResolvedCompileFileDefinitionsToChange" />
     </JoinItems>
 
     <ItemGroup>
       <ResolvedCompileFileDefinitions Remove="@(_ResolvedCompileFileDefinitionsToChange)" />
 
+      <!-- Ignore %(NuGetPackageVersion) when doing substitution because some projects use downlevel packages. -->
       <_ResolvedCompileFileDefinitionsToChange
-          HintPath="$([System.String]::new('%(Identity)').Replace('\%(NuGetPackageVersion)\', '\%(RTMVersion)\'))" />
+          HintPath="$([System.String]::new('%(Identity)').Replace('\%(Version)\', '\%(RTMVersion)\').Replace('/%(Version)/', '/%(RTMVersion)/'))" />
       <ResolvedCompileFileDefinitions Include="@(_ResolvedCompileFileDefinitionsToChange -> '%(HintPath)')" />
 
       <_ResolvedCompileFileDefinitionsToChange Remove="@(_ResolvedCompileFileDefinitionsToChange)" />
