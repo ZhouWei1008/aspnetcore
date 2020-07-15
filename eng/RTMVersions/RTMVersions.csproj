@@ -22,4 +22,7 @@
   <ItemGroup>
     <PackageReference Include="@(LatestPackageReference->HasMetadata('RTMVersion'))" Version="%(RTMVersion)" />
   </ItemGroup>
+
+  <!-- Arcade SDK calls Test target on every project in the repo but provides an empty fallback. Do same here. -->
+  <Target Name="Test" />
 </Project>
